@@ -17,7 +17,7 @@ pub struct Announce {
     pub port: u16,
 }
 
-pub async fn discover(device_id: impl Into<String>) -> mpsc::Receiver<Peer> {
+pub async fn discover(device_id: impl Into<String>) -> (TcpListener, mpsc::Receiver<Peer>) {
     let tcp_listener = TcpListener::bind("0.0.0.0:0").await.unwrap();
     let announce = Announce {
         device_id: device_id.into(),
@@ -52,5 +52,5 @@ pub async fn discover(device_id: impl Into<String>) -> mpsc::Receiver<Peer> {
             tx.send(peer).await.unwrap();
         }
     });
-    rx
+    (tcp_listener, rx)
 }
