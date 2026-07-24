@@ -63,7 +63,7 @@ impl Transport {
                     .await
                     .unwrap();
                 println!("Udp broadcast sent");
-                sleep(Duration::from_secs(5)).await;
+                sleep(Duration::from_secs(10)).await;
             }
         });
 
