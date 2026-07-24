@@ -14,7 +14,7 @@ use tokio::{
     time::sleep,
 };
 
-use crate::{clipboard::Clipboard, frame::Frame};
+use crate::{clipboard::ClipboardManager, frame::Frame};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Announce {
@@ -29,7 +29,7 @@ pub struct Transport {
 impl Transport {
     pub async fn new_start(
         local_rx: mpsc::UnboundedReceiver<Frame>,
-        clipboard: Clipboard,
+        clipboard: ClipboardManager,
     ) -> Result<(), Box<dyn Error>> {
         let tcp_listener = TcpListener::bind("0.0.0.0:0").await?;
         let mut transport = Self {
@@ -62,6 +62,7 @@ impl Transport {
                     .send_to(payload.as_bytes(), "255.255.255.255:4000")
                     .await
                     .unwrap();
+                println!("Udp broadcast sent");
                 sleep(Duration::from_secs(5)).await;
             }
         });
@@ -72,10 +73,17 @@ impl Transport {
             let mut buf = [0u8; 256];
             loop {
                 let (n, sender_addr) = recv_socket.recv_from(&mut buf).await.unwrap();
+                println!("Udp broadcast received");
                 let Ok(announce) = serde_json::from_slice::<Announce>(&buf[..n]) else {
                     continue;
                 };
-                peers.lock().await.insert(sender_addr.ip(), announce.port);
+                // peers.lock().await.insert(sender_addr.ip(), announce.port);
+                peers
+                    .lock()
+                    .await
+                    .entry(sender_addr.ip())
+                    .or_insert(announce.port);
+                println!("{:?}:{} added to peers", sender_addr.ip(), announce.port);
             }
         });
     }
@@ -112,21 +120,23 @@ impl Transport {
             }
         });
     }
-    async fn listen(&mut self, clipboard: Arc<Mutex<Clipboard>>) {
+    async fn listen(&mut self, clipboard: Arc<Mutex<ClipboardManager>>) {
         let tcp_listener = self.tcp_listener.take().expect("TcpListener not exist!");
 
-        while let Ok((mut stream, _)) = tcp_listener.accept().await {
+        while let Ok((mut stream, addr)) = tcp_listener.accept().await {
             let cp = clipboard.clone();
+            println!("{:?} connected to Tcp", addr.clone().ip());
             tokio::spawn(async move {
                 let mut buff = Vec::with_capacity(1000);
-                stream.read_to_end(&mut buff).await.unwrap();
-                let frame = Frame::new(&buff);
+                let n = stream.read_to_end(&mut buff).await.unwrap();
+                let frame = Frame::new(&buff[..n]);
                 let mut cp = cp.lock().await;
                 if cp.hash != frame.hash && cp.timestamp < frame.timestamp {
                     cp.hash = frame.hash;
                     cp.timestamp = frame.timestamp;
                     cp.set_content(&frame.bytes).await;
                 }
+                println!("{:?} sent content successfully", addr.ip());
             });
         }
     }

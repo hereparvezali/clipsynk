@@ -7,12 +7,12 @@ use tokio::sync::mpsc;
 
 use crate::{frame::Frame, utils::do_hash};
 
-pub struct Clipboard {
+pub struct ClipboardManager {
     pub hash: u64,
     pub timestamp: u128,
 }
 
-impl Clipboard {
+impl ClipboardManager {
     pub async fn new() -> (Self, mpsc::UnboundedReceiver<Frame>) {
         let content = Self::get_content().await;
         let timestamp = SystemTime::now()
@@ -27,6 +27,7 @@ impl Clipboard {
         (Self { hash, timestamp }, local_rx)
     }
 
+    #[cfg(target_os = "linux")]
     pub async fn get_content() -> Vec<u8> {
         let mut content = Vec::new();
         wl_clipboard_rs::paste::get_contents(
@@ -40,6 +41,22 @@ impl Clipboard {
         .unwrap();
         content
     }
+    #[cfg(target_os = "windows")]
+    pub async fn get_content() -> Vec<u8> {
+        tokio::task::spawn_blocking(|| {
+            use clipboard_master::Clipboard;
+
+            let mut clipboard = Clipboard::new().unwrap();
+
+            clipboard
+                .get_string()
+                .map(|s| s.into_bytes())
+                .unwrap_or_default()
+        })
+        .await
+        .unwrap()
+    }
+    #[cfg(target_os = "linux")]
     pub async fn set_content(&mut self, bytes: &[u8]) {
         wl_clipboard_rs::copy::Options::new()
             .copy(
@@ -47,11 +64,24 @@ impl Clipboard {
                 wl_clipboard_rs::copy::MimeType::Text,
             )
             .unwrap();
+        println!("Clipboard updated");
+    }
+    #[cfg(target_os = "windows")]
+    pub async fn set_content(&mut self, bytes: &[u8]) {
+        let text = String::from_utf8_lossy(bytes).to_string();
+
+        tokio::task::spawn_blocking(move || {
+            use clipboard_master::Clipboard;
+
+            let mut clipboard = Clipboard::new().unwrap();
+            let _ = clipboard.set_string(text);
+        })
+        .await
+        .unwrap();
+        println!("Clipboard updated");
     }
     #[cfg(target_os = "linux")]
     async fn watch() -> tokio::sync::mpsc::UnboundedReceiver<Frame> {
-        use crate::frame::Frame;
-
         let (tx, rx) = mpsc::unbounded_channel::<Frame>();
 
         tokio::spawn(async move {
@@ -61,6 +91,7 @@ impl Clipboard {
             .unwrap();
             while let Some(Ok(msg)) = clipboard_stream.paste_stream().next() {
                 let frame = Frame::new(&msg.context.context);
+                println!("Watched");
                 tx.send(frame).unwrap();
             }
         });
@@ -68,8 +99,32 @@ impl Clipboard {
     }
 
     #[cfg(target_os = "windows")]
-    pub async fn watch() -> tokio::sync::mpsc::UnboundedReceiver<String> {
-        let (tx, rx) = mpsc::unbounded_channel::<String>();
+    async fn watch() -> mpsc::UnboundedReceiver<Frame> {
+        use clipboard_master::{CallbackResult, ClipboardHandler, Master};
+
+        let (tx, rx) = mpsc::unbounded_channel::<Frame>();
+
+        struct Handler {
+            tx: mpsc::UnboundedSender<Frame>,
+        }
+
+        impl ClipboardHandler for Handler {
+            fn on_clipboard_change(&mut self) -> CallbackResult {
+                let mut clipboard = clipboard_master::Clipboard::new().unwrap();
+
+                if let Ok(text) = clipboard.get_string() {
+                    let _ = self.tx.send(Frame::new(text.as_bytes()));
+                }
+                println!("Watched");
+
+                CallbackResult::Next
+            }
+        }
+
+        std::thread::spawn(move || {
+            let handler = Handler { tx };
+            Master::new(handler).run().unwrap();
+        });
 
         rx
     }
