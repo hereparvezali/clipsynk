@@ -5,9 +5,7 @@ use std::{
 
 use tokio::sync::mpsc;
 
-#[cfg(target_os = "linux")]
-use crate::frame::Frame;
-use crate::utils::do_hash;
+use crate::{frame::Frame, utils::do_hash};
 
 pub struct Clipboard {
     pub hash: u64,
@@ -29,8 +27,8 @@ impl Clipboard {
         (Self { hash, timestamp }, local_rx)
     }
 
-    pub async fn get_content() -> String {
-        let mut content = String::new();
+    pub async fn get_content() -> Vec<u8> {
+        let mut content = Vec::new();
         wl_clipboard_rs::paste::get_contents(
             wl_clipboard_rs::paste::ClipboardType::Primary,
             wl_clipboard_rs::paste::Seat::Unspecified,
@@ -38,7 +36,7 @@ impl Clipboard {
         )
         .unwrap()
         .0
-        .read_to_string(&mut content)
+        .read_to_end(&mut content)
         .unwrap();
         content
     }
