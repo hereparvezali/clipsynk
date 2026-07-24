@@ -1,4 +1,15 @@
-pub mod connections;
+use std::error::Error;
+
+use crate::{clipboard::Clipboard, transport::Transport};
+
+pub mod clipboard;
+pub mod frame;
+pub mod transport;
+pub mod utils;
 
 #[tokio::main]
-async fn main() {}
+async fn main() -> Result<(), Box<dyn Error>> {
+    let (clip, local_rx) = Clipboard::new().await;
+    Transport::new_start(local_rx, clip).await?;
+    Ok(())
+}
