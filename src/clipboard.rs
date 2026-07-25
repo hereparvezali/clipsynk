@@ -163,7 +163,7 @@ impl ClipboardManager {
         }
 
         tokio::task::spawn_blocking(move || {
-            let mut master = Master::new(Handler { local_tx, cb });
+            let mut master = Master::new(Handler { local_tx, cb }).unwrap();
             let _ = master.run();
         });
 
