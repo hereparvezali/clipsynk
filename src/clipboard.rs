@@ -124,13 +124,13 @@ impl ClipboardManager {
             .unwrap();
             while let Some(Ok(msg)) = clipboard_stream.paste_stream().next() {
                 let frame = Frame::new(&msg.context.context);
-                if cb.lock().await.hash == frame.hash {
+                let mut cb = cb.lock().await;
+                if cb.hash == frame.hash {
                     continue;
-                } else {
-                    let mut cb = cb.lock().await;
-                    cb.hash = frame.hash;
-                    cb.timestamp = frame.timestamp;
                 }
+
+                cb.hash = frame.hash;
+                cb.timestamp = frame.timestamp;
                 dbg!("Watched");
                 local_tx.send(frame).unwrap();
             }
