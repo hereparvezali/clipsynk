@@ -24,6 +24,14 @@ impl ClipboardManager {
 
         (cm, local_rx)
     }
+    pub async fn resolve(&self, frame: Frame) {
+        let mut cb = self.clipboard.lock().await;
+        if frame.hash != cb.hash && frame.timestamp > cb.timestamp {
+            cb.hash = frame.hash;
+            cb.timestamp = frame.timestamp;
+            self.set_content(&frame.bytes).await;
+        }
+    }
 
     #[cfg(target_os = "linux")]
     pub async fn get_content() -> Vec<u8> {
