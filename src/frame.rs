@@ -36,10 +36,6 @@ impl Frame {
         }
     }
 
-    pub fn is_duplicate_of(&self, other: &Frame) -> bool {
-        self.hash == other.hash
-    }
-
     pub fn encode(&self) -> Result<Vec<u8>, serde_json::Error> {
         serde_json::to_vec(self)
     }

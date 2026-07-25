@@ -29,7 +29,7 @@ pub struct Transport {
 impl Transport {
     pub async fn new_start(
         local_rx: mpsc::UnboundedReceiver<Frame>,
-        clipboard: ClipboardManager,
+        cm: ClipboardManager,
     ) -> Result<(), Box<dyn Error>> {
         let tcp_listener = TcpListener::bind("0.0.0.0:0").await?;
         let mut transport = Self {
@@ -39,7 +39,7 @@ impl Transport {
 
         transport.discover().await;
         transport.broadcast_local(local_rx).await;
-        transport.listen(Arc::new(Mutex::new(clipboard))).await;
+        transport.listen(cm.clone()).await;
         Ok(())
     }
     async fn discover(&mut self) {
@@ -62,28 +62,29 @@ impl Transport {
                     .send_to(payload.as_bytes(), "255.255.255.255:4000")
                     .await
                     .unwrap();
-                println!("Udp broadcast sent");
-                sleep(Duration::from_secs(10)).await;
+                dbg!("Udp broadcast sent");
+                sleep(Duration::from_secs(20)).await;
             }
         });
 
         let peers = self.peers.clone();
         tokio::spawn(async move {
-            let recv_socket = UdpSocket::bind("255.255.255.255:4000").await.unwrap();
+            let recv_socket = UdpSocket::bind("0.0.0.0:4000").await.unwrap();
             let mut buf = [0u8; 256];
-            loop {
-                let (n, sender_addr) = recv_socket.recv_from(&mut buf).await.unwrap();
-                println!("Udp broadcast received");
+            let my_addresses = local_ip_address::list_afinet_netifas()
+                .unwrap()
+                .iter()
+                .map(|&(_, i)| i)
+                .collect::<Vec<IpAddr>>();
+            while let Ok((n, sender_addr)) = recv_socket.recv_from(&mut buf).await {
                 let Ok(announce) = serde_json::from_slice::<Announce>(&buf[..n]) else {
                     continue;
                 };
-                // peers.lock().await.insert(sender_addr.ip(), announce.port);
-                peers
-                    .lock()
-                    .await
-                    .entry(sender_addr.ip())
-                    .or_insert(announce.port);
-                println!("{:?}:{} added to peers", sender_addr.ip(), announce.port);
+                if my_addresses.contains(&sender_addr.ip()) {
+                    continue;
+                }
+                peers.lock().await.insert(sender_addr.ip(), announce.port);
+                dbg!("{:?}:{} added to peers", sender_addr.ip(), announce.port);
             }
         });
     }
@@ -106,37 +107,53 @@ impl Transport {
                     let frame_encoded = frame_encoded.clone();
 
                     tokio::spawn(async move {
-                        if let Ok(mut stream) =
-                            TcpStream::connect(SocketAddr::new(peer.0.clone(), peer.1.clone()))
-                                .await
-                        {
-                            let _ = stream.write_all(&frame_encoded).await;
-                            let _ = stream.shutdown().await;
-                        } else {
-                            peers.lock().await.remove(&peer.0);
+                        let target_addr = SocketAddr::new(peer.0, peer.1);
+
+                        let connect_result = tokio::time::timeout(
+                            std::time::Duration::from_secs(3),
+                            TcpStream::connect(target_addr),
+                        )
+                        .await;
+
+                        match connect_result {
+                            Ok(Ok(mut stream)) => {
+                                if let Err(e) = stream.write_all(&frame_encoded).await {
+                                    dbg!("[TCP Error] Failed to write to {}: {:?}", target_addr, e);
+                                }
+                                let _ = stream.shutdown().await;
+                            }
+                            _ => {
+                                dbg!("[TCP] Peer {} unreachable, removing from peer list", peer.0);
+                                peers.lock().await.remove(&peer.0);
+                            }
                         }
                     });
                 }
             }
         });
     }
-    async fn listen(&mut self, clipboard: Arc<Mutex<ClipboardManager>>) {
+    async fn listen(&mut self, cm: ClipboardManager) {
         let tcp_listener = self.tcp_listener.take().expect("TcpListener not exist!");
+        let cm = cm.clone();
 
         while let Ok((mut stream, addr)) = tcp_listener.accept().await {
-            let cp = clipboard.clone();
-            println!("{:?} connected to Tcp", addr.clone().ip());
+            let cm = cm.clone();
+
+            dbg!("{:?} connected to Tcp", addr.clone().ip());
             tokio::spawn(async move {
                 let mut buff = Vec::with_capacity(1000);
                 let n = stream.read_to_end(&mut buff).await.unwrap();
-                let frame = Frame::new(&buff[..n]);
-                let mut cp = cp.lock().await;
-                if cp.hash != frame.hash && cp.timestamp < frame.timestamp {
-                    cp.hash = frame.hash;
-                    cp.timestamp = frame.timestamp;
-                    cp.set_content(&frame.bytes).await;
+                let frame = Frame::decode(&buff[..n]).unwrap();
+
+                if cm.clipboard.lock().await.hash != frame.hash
+                    && cm.clipboard.lock().await.timestamp < frame.timestamp
+                {
+                    let mut cb = cm.clipboard.lock().await;
+                    cb.hash = frame.hash;
+                    cb.timestamp = frame.timestamp;
+                    cm.set_content(&frame.bytes).await;
                 }
-                println!("{:?} sent content successfully", addr.ip());
+                dbg!("{:?} Got content successfully", addr.ip());
             });
         }
     }
