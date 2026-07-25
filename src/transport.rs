@@ -23,7 +23,7 @@ pub struct Announce {
 }
 
 pub struct Transport {
-    pub peers: Arc<Mutex<HashMap<IpAddr, u16>>>,
+    pub peers: Arc<Mutex<HashMap<SocketAddr, mpsc::UnboundedReceiver<Frame>>>>,
     pub tcp_listener: Option<TcpListener>,
 }
 impl Transport {
@@ -33,7 +33,10 @@ impl Transport {
     ) -> Result<(), Box<dyn Error>> {
         let tcp_listener = TcpListener::bind("0.0.0.0:0").await?;
         let mut transport = Self {
-            peers: Arc::new(Mutex::new(HashMap::<IpAddr, u16>::new())),
+            peers: Arc::new(Mutex::new(HashMap::<
+                SocketAddr,
+                mpsc::UnboundedReceiver<Frame>,
+            >::new())),
             tcp_listener: Some(tcp_listener),
         };
 
@@ -83,54 +86,54 @@ impl Transport {
                 if my_addresses.contains(&sender_addr.ip()) {
                     continue;
                 }
-                peers.lock().await.insert(sender_addr.ip(), announce.port);
+                peers.lock().await.insert();
                 dbg!("{:?}:{} added to peers", sender_addr.ip(), announce.port);
             }
         });
     }
 
     pub async fn broadcast_local(&mut self, mut local_rx: mpsc::UnboundedReceiver<Frame>) {
-        let peers = self.peers.clone();
+        // let peers = self.peers.clone();
 
-        tokio::spawn(async move {
-            while let Some(frame) = local_rx.recv().await {
-                let peers_vec: Vec<(IpAddr, u16)> = peers
-                    .lock()
-                    .await
-                    .iter()
-                    .map(|(&ip, &port)| (ip, port))
-                    .collect();
-                let frame_encoded = frame.encode().unwrap();
+        // tokio::spawn(async move {
+        //     while let Some(frame) = local_rx.recv().await {
+        //         let peers_vec: Vec<(IpAddr, u16)> = peers
+        //             .lock()
+        //             .await
+        //             .iter()
+        //             .map(|(&ip, &port)| (ip, port))
+        //             .collect();
+        //         let frame_encoded = frame.encode().unwrap();
 
-                for peer in peers_vec.into_iter() {
-                    let peers = peers.clone();
-                    let frame_encoded = frame_encoded.clone();
+        //         for peer in peers_vec.into_iter() {
+        //             let peers = peers.clone();
+        //             let frame_encoded = frame_encoded.clone();
 
-                    tokio::spawn(async move {
-                        let target_addr = SocketAddr::new(peer.0, peer.1);
+        //             tokio::spawn(async move {
+        //                 let target_addr = SocketAddr::new(peer.0, peer.1);
 
-                        let connect_result = tokio::time::timeout(
-                            std::time::Duration::from_secs(3),
-                            TcpStream::connect(target_addr),
-                        )
-                        .await;
+        //                 let connect_result = tokio::time::timeout(
+        //                     std::time::Duration::from_secs(3),
+        //                     TcpStream::connect(target_addr),
+        //                 )
+        //                 .await;
 
-                        match connect_result {
-                            Ok(Ok(mut stream)) => {
-                                if let Err(e) = stream.write_all(&frame_encoded).await {
-                                    dbg!("[TCP Error] Failed to write to {}: {:?}", target_addr, e);
-                                }
-                                let _ = stream.shutdown().await;
-                            }
-                            _ => {
-                                dbg!("[TCP] Peer {} unreachable, removing from peer list", peer.0);
-                                peers.lock().await.remove(&peer.0);
-                            }
-                        }
-                    });
-                }
-            }
-        });
+        //                 match connect_result {
+        //                     Ok(Ok(mut stream)) => {
+        //                         if let Err(e) = stream.write_all(&frame_encoded).await {
+        //                             dbg!("[TCP Error] Failed to write to {}: {:?}", target_addr, e);
+        //                         }
+        //                         let _ = stream.shutdown().await;
+        //                     }
+        //                     _ => {
+        //                         dbg!("[TCP] Peer {} unreachable, removing from peer list", peer.0);
+        //                         peers.lock().await.remove(&peer.0);
+        //                     }
+        //                 }
+        //             });
+        //         }
+        //     }
+        // });
     }
     async fn listen(&mut self, cm: ClipboardManager) {
         let tcp_listener = self.tcp_listener.take().expect("TcpListener not exist!");
