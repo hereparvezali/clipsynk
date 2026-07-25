@@ -111,7 +111,9 @@ impl Transport {
         tokio::spawn(async move {
             while let Some(frame) = wh_rx.recv().await {
                 let peers = peers.clone();
-                if wh.write_all(&frame.encode().unwrap()).await.is_err() {
+                let payload = frame.encode().unwrap();
+                let len = (payload.len() as u32).to_be_bytes();
+                if wh.write_all(&len).await.is_err() || wh.write_all(&payload).await.is_err() {
                     let _ = peers.lock().await.remove(&peer_addr);
                     break;
                 }
@@ -121,9 +123,16 @@ impl Transport {
 
         let cm = self.cm.clone();
         tokio::spawn(async move {
-            let mut data = Vec::new();
-            while let Ok(n) = rh.read_to_end(&mut data).await {
-                cm.resolve(Frame::decode(&data[..n]).unwrap()).await;
+            let mut len_buf = [0u8; 4];
+            while rh.read_exact(&mut len_buf).await.is_ok() {
+                let len = u32::from_be_bytes(len_buf) as usize;
+                let mut data = vec![0u8; len];
+                if rh.read_exact(&mut data).await.is_err() {
+                    break;
+                }
+                if let Ok(frame) = Frame::decode(&data) {
+                    cm.resolve(frame).await;
+                }
             }
         });
     }
