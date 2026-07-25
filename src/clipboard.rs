@@ -81,7 +81,6 @@ impl ClipboardManager {
                 wl_clipboard_rs::copy::MimeType::Text,
             )
             .unwrap();
-        dbg!("Clipboard updated");
     }
     #[cfg(target_os = "windows")]
     pub async fn set_content(&self, bytes: &[u8]) {
@@ -94,8 +93,6 @@ impl ClipboardManager {
         })
         .await
         .unwrap();
-
-        dbg!("Clipboard updated");
     }
     #[cfg(target_os = "macos")]
     pub async fn set_content(&self, bytes: &[u8]) {
@@ -108,8 +105,6 @@ impl ClipboardManager {
         })
         .await
         .unwrap_or_default();
-
-        dbg!("Clipboard updated");
     }
 
     #[cfg(target_os = "linux")]
@@ -131,7 +126,6 @@ impl ClipboardManager {
 
                 cb.hash = frame.hash;
                 cb.timestamp = frame.timestamp;
-                dbg!("Watched");
                 local_tx.send(frame).unwrap();
             }
         });
@@ -161,7 +155,6 @@ impl ClipboardManager {
                         cb.hash = frame.hash;
                         cb.timestamp = frame.timestamp;
 
-                        dbg!("Watched");
                         let _ = self.local_tx.send(frame);
                     }
                 }
@@ -201,7 +194,6 @@ impl ClipboardManager {
                             cb.hash = frame.hash;
                             cb.timestamp = frame.timestamp;
 
-                            dbg!("Watched");
                             let _ = self.local_tx.send(frame);
                         }
                     }

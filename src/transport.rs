@@ -60,7 +60,6 @@ impl Transport {
                     .send_to(payload.as_bytes(), "255.255.255.255:4000")
                     .await
                     .unwrap();
-                dbg!("Udp broadcast sent");
                 sleep(Duration::from_secs(20)).await;
             }
         });
@@ -79,11 +78,13 @@ impl Transport {
                 let Ok(announce) = serde_json::from_slice::<Announce>(&buf[..n]) else {
                     continue;
                 };
-                if my_addresses.contains(&sender_addr.ip()) {
-                    continue;
-                }
                 let sender_sock = SocketAddr::new(sender_addr.ip(), announce.port);
                 let this = this.clone();
+                if my_addresses.contains(&sender_addr.ip())
+                    || this.peers.lock().await.contains_key(&sender_sock)
+                {
+                    continue;
+                }
                 tokio::spawn(async move {
                     let Ok(stream) = TcpStream::connect(sender_sock).await else {
                         return;
