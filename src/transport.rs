@@ -43,8 +43,8 @@ impl Transport {
         };
 
         transport.discover(port).await;
-        transport.broadcast_local(local_rx).await;
         transport.listen(tcp_listener).await;
+        transport.broadcast_local(local_rx).await;
         Ok(())
     }
     async fn discover(&self, port: u16) {
@@ -96,12 +96,14 @@ impl Transport {
     }
     async fn listen(&self, tcp_listener: TcpListener) {
         let this = self.clone();
-        while let Ok((stream, _)) = tcp_listener.accept().await {
-            let this = this.clone();
-            tokio::spawn(async move {
-                this.handle_connection(stream).await;
-            });
-        }
+        tokio::spawn(async move {
+            while let Ok((stream, _)) = tcp_listener.accept().await {
+                let this = this.clone();
+                tokio::spawn(async move {
+                    this.handle_connection(stream).await;
+                });
+            }
+        });
     }
     pub async fn handle_connection(&self, stream: TcpStream) {
         let peers = self.peers.clone();
@@ -140,11 +142,9 @@ impl Transport {
 
     pub async fn broadcast_local(&self, mut local_rx: mpsc::UnboundedReceiver<Frame>) {
         let peers = self.peers.clone();
-        tokio::spawn(async move {
-            while let Some(frame) = local_rx.recv().await {
-                let mut peers = peers.lock().await;
-                peers.retain(|_, tx| tx.send(frame.clone()).is_ok());
-            }
-        });
+        while let Some(frame) = local_rx.recv().await {
+            let mut peers = peers.lock().await;
+            peers.retain(|_, tx| tx.send(frame.clone()).is_ok());
+        }
     }
 }

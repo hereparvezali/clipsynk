@@ -123,7 +123,6 @@ impl ClipboardManager {
                 if cb.hash == frame.hash {
                     continue;
                 }
-
                 cb.hash = frame.hash;
                 cb.timestamp = frame.timestamp;
                 local_tx.send(frame).unwrap();
