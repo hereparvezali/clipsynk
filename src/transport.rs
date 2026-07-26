@@ -23,7 +23,7 @@ pub struct Announce {
 
 #[derive(Debug, Clone)]
 pub struct Transport {
-    pub peers: Arc<Mutex<HashMap<SocketAddr, mpsc::UnboundedSender<Frame>>>>,
+    pub peers: Arc<Mutex<HashMap<IpAddr, (u16, mpsc::UnboundedSender<Frame>)>>>,
     pub cm: ClipboardManager,
 }
 
@@ -36,8 +36,8 @@ impl Transport {
         let port = tcp_listener.local_addr().unwrap().port();
         let transport = Self {
             peers: Arc::new(Mutex::new(HashMap::<
-                SocketAddr,
-                mpsc::UnboundedSender<Frame>,
+                IpAddr,
+                (u16, mpsc::UnboundedSender<Frame>),
             >::new())),
             cm,
         };
@@ -81,7 +81,7 @@ impl Transport {
                 let sender_sock = SocketAddr::new(sender_addr.ip(), announce.port);
                 let this = this.clone();
                 if my_addresses.contains(&sender_addr.ip())
-                    || this.peers.lock().await.contains_key(&sender_sock)
+                    || this.peers.lock().await.contains_key(&sender_sock.ip())
                 {
                     continue;
                 }
@@ -117,12 +117,16 @@ impl Transport {
                 let payload = frame.encode().unwrap();
                 let len = (payload.len() as u32).to_be_bytes();
                 if wh.write_all(&len).await.is_err() || wh.write_all(&payload).await.is_err() {
-                    let _ = peers.lock().await.remove(&peer_addr);
+                    let _ = peers.lock().await.remove(&peer_addr.ip());
                     break;
                 }
             }
         });
-        self.peers.lock().await.entry(peer_addr).or_insert(wh_tx);
+        self.peers
+            .lock()
+            .await
+            .entry(peer_addr.ip())
+            .or_insert((peer_addr.port(), wh_tx));
 
         let cm = self.cm.clone();
         tokio::spawn(async move {
@@ -144,7 +148,7 @@ impl Transport {
         let peers = self.peers.clone();
         while let Some(frame) = local_rx.recv().await {
             let mut peers = peers.lock().await;
-            peers.retain(|_, tx| tx.send(frame.clone()).is_ok());
+            peers.retain(|_, (_, tx)| tx.send(frame.clone()).is_ok());
             dbg!("{:?}", peers.clone());
         }
     }
