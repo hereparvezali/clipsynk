@@ -35,19 +35,29 @@ impl ClipboardManager {
 
     #[cfg(target_os = "linux")]
     pub async fn get_content() -> Vec<u8> {
-        use std::io::Read as _;
-
-        let mut content = Vec::new();
-        wl_clipboard_rs::paste::get_contents(
-            wl_clipboard_rs::paste::ClipboardType::Regular,
-            wl_clipboard_rs::paste::Seat::Unspecified,
-            wl_clipboard_rs::paste::MimeType::Text,
-        )
-        .unwrap()
-        .0
-        .read_to_end(&mut content)
-        .unwrap();
-        content
+        if std::env::var("WAYLAND_DISPLAY").is_ok() {
+            use std::io::Read as _;
+            let mut content = Vec::new();
+            wl_clipboard_rs::paste::get_contents(
+                wl_clipboard_rs::paste::ClipboardType::Regular,
+                wl_clipboard_rs::paste::Seat::Unspecified,
+                wl_clipboard_rs::paste::MimeType::Text,
+            )
+            .unwrap()
+            .0
+            .read_to_end(&mut content)
+            .unwrap();
+            content
+        } else {
+            tokio::task::spawn_blocking(|| {
+                arboard::Clipboard::new()
+                    .and_then(|mut cb| cb.get_text())
+                    .map(|s| s.into_bytes())
+                    .unwrap_or_default()
+            })
+            .await
+            .unwrap_or_default()
+        }
     }
     #[cfg(target_os = "windows")]
     pub async fn get_content() -> Vec<u8> {
@@ -75,12 +85,23 @@ impl ClipboardManager {
 
     #[cfg(target_os = "linux")]
     pub async fn set_content(&self, bytes: &[u8]) {
-        wl_clipboard_rs::copy::Options::new()
-            .copy(
-                wl_clipboard_rs::copy::Source::Bytes(bytes.to_vec().into_boxed_slice()),
-                wl_clipboard_rs::copy::MimeType::Text,
-            )
-            .unwrap();
+        if std::env::var("WAYLAND_DISPLAY").is_ok() {
+            wl_clipboard_rs::copy::Options::new()
+                .copy(
+                    wl_clipboard_rs::copy::Source::Bytes(bytes.to_vec().into_boxed_slice()),
+                    wl_clipboard_rs::copy::MimeType::Text,
+                )
+                .unwrap();
+        } else {
+            let text = String::from_utf8_lossy(bytes).to_string();
+            tokio::task::spawn_blocking(move || {
+                if let Ok(mut cb) = arboard::Clipboard::new() {
+                    let _ = cb.set_text(text);
+                }
+            })
+            .await
+            .unwrap_or_default();
+        }
     }
     #[cfg(target_os = "windows")]
     pub async fn set_content(&self, bytes: &[u8]) {
@@ -109,6 +130,15 @@ impl ClipboardManager {
 
     #[cfg(target_os = "linux")]
     async fn watch(&self) -> tokio::sync::mpsc::UnboundedReceiver<Frame> {
+        if std::env::var("WAYLAND_DISPLAY").is_ok() {
+            self.watch_wayland().await
+        } else {
+            self.watch_x11().await
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    async fn watch_wayland(&self) -> mpsc::UnboundedReceiver<Frame> {
         let (local_tx, local_rx) = mpsc::unbounded_channel::<Frame>();
         let cb = self.clipboard.clone();
 
@@ -128,6 +158,43 @@ impl ClipboardManager {
                 local_tx.send(frame).unwrap();
             }
         });
+        local_rx
+    }
+
+    #[cfg(target_os = "linux")]
+    async fn watch_x11(&self) -> mpsc::UnboundedReceiver<Frame> {
+        use clipboard_master::{CallbackResult, ClipboardHandler, Master};
+
+        let (local_tx, local_rx) = mpsc::unbounded_channel::<Frame>();
+        let cb = self.clipboard.clone();
+
+        struct Handler {
+            local_tx: mpsc::UnboundedSender<Frame>,
+            cb: std::sync::Arc<tokio::sync::Mutex<ClipboardState>>,
+        }
+
+        impl ClipboardHandler for Handler {
+            fn on_clipboard_change(&mut self) -> CallbackResult {
+                if let Ok(mut clipboard) = arboard::Clipboard::new() {
+                    if let Ok(text) = clipboard.get_text() {
+                        let frame = Frame::new(text.as_bytes());
+                        let mut cb = self.cb.blocking_lock();
+                        if cb.hash != frame.hash {
+                            cb.hash = frame.hash;
+                            cb.timestamp = frame.timestamp;
+                            let _ = self.local_tx.send(frame);
+                        }
+                    }
+                }
+                CallbackResult::Next
+            }
+        }
+
+        tokio::task::spawn_blocking(move || {
+            let mut master = Master::new(Handler { local_tx, cb }).unwrap();
+            let _ = master.run();
+        });
+
         local_rx
     }
     #[cfg(target_os = "windows")]
