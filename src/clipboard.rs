@@ -39,7 +39,7 @@ impl ClipboardManager {
 
         let mut content = Vec::new();
         wl_clipboard_rs::paste::get_contents(
-            wl_clipboard_rs::paste::ClipboardType::Primary,
+            wl_clipboard_rs::paste::ClipboardType::Regular,
             wl_clipboard_rs::paste::Seat::Unspecified,
             wl_clipboard_rs::paste::MimeType::Text,
         )
