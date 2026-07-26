@@ -1,10 +1,7 @@
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
+use xxhash_rust::const_xxh3;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Frame {
@@ -20,9 +17,7 @@ impl PartialEq for Frame {
 
 impl Frame {
     pub fn new(bytes: &[u8]) -> Self {
-        let mut hasher = DefaultHasher::new();
-        bytes.hash(&mut hasher);
-        let hash = hasher.finish();
+        let hash = const_xxh3::xxh3_64(bytes);
 
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)

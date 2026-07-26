@@ -106,11 +106,20 @@ impl Transport {
         });
     }
     pub async fn handle_connection(&self, stream: TcpStream) {
-        let peers = self.peers.clone();
         let peer_addr = stream.peer_addr().unwrap().clone();
+        if self.peers.lock().await.contains_key(&peer_addr.ip()) {
+            return;
+        }
+        let peers = self.peers.clone();
         let (mut rh, mut wh) = stream.into_split();
 
         let (wh_tx, mut wh_rx) = mpsc::unbounded_channel::<Frame>();
+        self.peers
+            .lock()
+            .await
+            .entry(peer_addr.ip())
+            .or_insert((peer_addr.port(), wh_tx));
+
         tokio::spawn(async move {
             while let Some(frame) = wh_rx.recv().await {
                 let peers = peers.clone();
@@ -122,11 +131,6 @@ impl Transport {
                 }
             }
         });
-        self.peers
-            .lock()
-            .await
-            .entry(peer_addr.ip())
-            .or_insert((peer_addr.port(), wh_tx));
 
         let cm = self.cm.clone();
         tokio::spawn(async move {
@@ -149,7 +153,6 @@ impl Transport {
         while let Some(frame) = local_rx.recv().await {
             let mut peers = peers.lock().await;
             peers.retain(|_, (_, tx)| tx.send(frame.clone()).is_ok());
-            dbg!("{:?}", peers.clone());
         }
     }
 }
