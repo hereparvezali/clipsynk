@@ -60,7 +60,7 @@ impl Transport {
                     .send_to(payload.as_bytes(), "255.255.255.255:4000")
                     .await
                     .unwrap();
-                sleep(Duration::from_secs(20)).await;
+                sleep(Duration::from_secs(300)).await;
             }
         });
 
@@ -107,19 +107,18 @@ impl Transport {
     }
     pub async fn handle_connection(&self, stream: TcpStream) {
         let peer_addr = stream.peer_addr().unwrap().clone();
-        if self.peers.lock().await.contains_key(&peer_addr.ip()) {
-            return;
-        }
-        let peers = self.peers.clone();
-        let (mut rh, mut wh) = stream.into_split();
 
         let (wh_tx, mut wh_rx) = mpsc::unbounded_channel::<Frame>();
-        self.peers
-            .lock()
-            .await
-            .entry(peer_addr.ip())
-            .or_insert((peer_addr.port(), wh_tx));
+        {
+            let mut peers = self.peers.lock().await;
+            if peers.contains_key(&peer_addr.ip()) {
+                return;
+            }
+            peers.insert(peer_addr.ip(), (peer_addr.port(), wh_tx));
+        }
 
+        let (mut rh, mut wh) = stream.into_split();
+        let peers = self.peers.clone();
         tokio::spawn(async move {
             while let Some(frame) = wh_rx.recv().await {
                 let peers = peers.clone();
