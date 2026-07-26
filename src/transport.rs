@@ -145,6 +145,7 @@ impl Transport {
         while let Some(frame) = local_rx.recv().await {
             let mut peers = peers.lock().await;
             peers.retain(|_, tx| tx.send(frame.clone()).is_ok());
+            dbg!("{:?}", peers.clone());
         }
     }
 }
