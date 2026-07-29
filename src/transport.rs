@@ -154,7 +154,9 @@ impl Transport {
 
         tokio::spawn(async move {
             while let Some(frame) = out_rx.recv().await {
-                frame.write(&mut wh).await.unwrap();
+                if frame.write(&mut wh).await.is_err() {
+                    break;
+                }
             }
         });
 
@@ -164,15 +166,17 @@ impl Transport {
                 cm.resolve(frame).await;
             }
         });
-
         Ok(())
     }
 
     pub async fn broadcast_local(&self, mut local_rx: mpsc::UnboundedReceiver<Frame>) {
         let peers = self.peers.clone();
         while let Some(frame) = local_rx.recv().await {
-            let mut peers = peers.lock().await;
-            peers.retain(|_, details| details.out_tx.send(frame.clone()).is_ok());
+            peers
+                .lock()
+                .await
+                .retain(|_, details| details.out_tx.send(frame.clone()).is_ok());
+            println!("{:#?}", peers.lock().await.keys());
         }
     }
 }
