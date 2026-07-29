@@ -21,9 +21,11 @@ pub struct Announce {
     pub port: u16,
 }
 
+pub type Map = HashMap<IpAddr, (u16, mpsc::UnboundedSender<Frame>)>;
+
 #[derive(Debug, Clone)]
 pub struct Transport {
-    pub peers: Arc<Mutex<HashMap<IpAddr, (u16, mpsc::UnboundedSender<Frame>)>>>,
+    pub peers: Arc<Mutex<Map>>,
     pub cm: ClipboardManager,
 }
 
@@ -106,7 +108,7 @@ impl Transport {
         });
     }
     pub async fn handle_connection(&self, stream: TcpStream) {
-        let peer_addr = stream.peer_addr().unwrap().clone();
+        let peer_addr = stream.peer_addr().unwrap();
 
         let (wh_tx, mut wh_rx) = mpsc::unbounded_channel::<Frame>();
         {
