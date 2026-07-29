@@ -1,6 +1,6 @@
 [package]
 name = "clipsynk"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "MIT"
 description = "Real-time Light-weight clipboard sync over your local network"
