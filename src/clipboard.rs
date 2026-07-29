@@ -176,15 +176,16 @@ impl ClipboardManager {
         impl ClipboardHandler for Handler {
             fn on_clipboard_change(&mut self) -> CallbackResult {
                 if let Ok(mut clipboard) = arboard::Clipboard::new()
-                    && let Ok(text) = clipboard.get_text() {
-                        let frame = Frame::new(text.as_bytes());
-                        let mut cb = self.cb.blocking_lock();
-                        if cb.hash != frame.hash {
-                            cb.hash = frame.hash;
-                            cb.timestamp = frame.timestamp;
-                            let _ = self.local_tx.send(frame);
-                        }
+                    && let Ok(text) = clipboard.get_text()
+                {
+                    let frame = Frame::new(text.as_bytes());
+                    let mut cb = self.cb.blocking_lock();
+                    if cb.hash != frame.hash {
+                        cb.hash = frame.hash;
+                        cb.timestamp = frame.timestamp;
+                        let _ = self.local_tx.send(frame);
                     }
+                }
                 CallbackResult::Next
             }
         }
@@ -250,18 +251,19 @@ impl ClipboardManager {
         impl ClipboardHandler for Handler {
             fn on_clipboard_change(&mut self) -> CallbackResult {
                 if let Ok(mut clipboard) = arboard::Clipboard::new()
-                    && let Ok(text) = clipboard.get_text() {
-                        let frame = Frame::new(text.as_bytes());
+                    && let Ok(text) = clipboard.get_text()
+                {
+                    let frame = Frame::new(text.as_bytes());
 
-                        let mut cb = self.cb.blocking_lock();
+                    let mut cb = self.cb.blocking_lock();
 
-                        if cb.hash != frame.hash {
-                            cb.hash = frame.hash;
-                            cb.timestamp = frame.timestamp;
+                    if cb.hash != frame.hash {
+                        cb.hash = frame.hash;
+                        cb.timestamp = frame.timestamp;
 
-                            let _ = self.local_tx.send(frame);
-                        }
+                        let _ = self.local_tx.send(frame);
                     }
+                }
 
                 CallbackResult::Next
             }
