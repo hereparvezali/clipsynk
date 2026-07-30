@@ -13,7 +13,6 @@ pub enum AppErr {
     SerializeErr(String),
     #[error("AddressErr")]
     AddressErr,
-
     #[error("AlreadyExistErr: {0}")]
     AlreadyExistErr(String),
 }

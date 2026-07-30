@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, hash_map::Entry},
+    collections::HashMap,
     error::Error,
     net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4},
     sync::Arc,
@@ -68,8 +68,10 @@ impl Transport {
         sock.set_nonblocking(true).unwrap();
         sock.set_broadcast(broadcast).unwrap();
         sock.set_reuse_address(true).unwrap();
+
         #[cfg(unix)]
         sock.set_reuse_port(true).unwrap();
+
         sock.bind(&SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, port).into())
             .expect("Broadcast ports binding failed");
         UdpSocket::from_std(sock.into())
@@ -143,40 +145,51 @@ impl Transport {
         let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Frame>();
 
         let handshake = HandShake::read(&mut rh).await?;
-        match self.peers.lock().await.entry(handshake.device_id) {
-            Entry::Occupied(_) => {
-                return Err(AppErr::AlreadyExistErr("Peer already exist".into()));
-            }
-            Entry::Vacant(vacant) => {
-                vacant.insert(Details::new(peer_addr, out_tx));
+
+        {
+            let mut peers = self.peers.lock().await;
+            if !peers.contains_key(&handshake.device_id) {
+                peers.insert(handshake.device_id, Details::new(peer_addr, out_tx));
             }
         }
 
-        tokio::spawn(async move {
+        let writer = async move {
             while let Some(frame) = out_rx.recv().await {
                 if frame.write(&mut wh).await.is_err() {
+                    println!("{:?} exiting!", handshake.device_id);
                     break;
                 }
             }
-        });
+        };
 
         let cm = self.cm.clone();
-        tokio::spawn(async move {
+        let reader = async move {
             while let Ok(frame) = Frame::read(&mut rh).await {
                 cm.resolve(frame).await;
             }
-        });
+        };
+
+        tokio::select! {
+            _ = writer => {
+                println!("[handle_connection] writing discarded!")
+            }
+            _ = reader => {
+                println!("[handle_connection] reading discarded!")
+            }
+        }
+        self.peers.lock().await.remove(&handshake.device_id);
+        println!("[REMOVED] {:?}", handshake.device_id);
+
         Ok(())
     }
 
     pub async fn broadcast_local(&self, mut local_rx: mpsc::UnboundedReceiver<Frame>) {
         let peers = self.peers.clone();
         while let Some(frame) = local_rx.recv().await {
-            peers
-                .lock()
-                .await
-                .retain(|_, details| details.out_tx.send(frame.clone()).is_ok());
-            println!("{:#?}", peers.lock().await.keys());
+            peers.lock().await.retain(|id, details| {
+                println!("sending: {:?}", id);
+                details.out_tx.send(frame.clone()).is_ok()
+            });
         }
     }
 }
