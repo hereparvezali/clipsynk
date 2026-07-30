@@ -1,9 +1,9 @@
 [package]
 name = "clipsynk"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 license = "MIT"
-description = "Real-time Light-weight clipboard sync over your local network"
+description = "Cross device real-time light-weight clipboard sync over your local network"
 repository = "https://github.com/hereparvezali/clipsynk"
 readme = "readme.md"
 keywords = ["clipboard", "sync", "device", "realtime", "cross"]
