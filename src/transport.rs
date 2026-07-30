@@ -83,6 +83,7 @@ impl Transport {
 
         tokio::spawn(async move {
             let payload = handshake.encode().unwrap();
+            println!("[BROADCASTING] in port: {}", broadcast_port);
             while send_socket
                 .send_to(&payload, format!("255.255.255.255:{}", broadcast_port))
                 .await
