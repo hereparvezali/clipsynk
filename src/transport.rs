@@ -115,6 +115,7 @@ impl Transport {
                 {
                     continue;
                 }
+
                 tokio::spawn(async move {
                     let Ok(stream) = TcpStream::connect(sender_sock).await else {
                         return;
@@ -131,6 +132,7 @@ impl Transport {
                 let this = this.clone();
                 tokio::spawn(async move {
                     let _ = this.handle_connection(stream).await;
+                    println!("[LISTENING] {:?} port:{}", this.device_id, this.tcp_port);
                 });
             }
         });
@@ -150,13 +152,13 @@ impl Transport {
             let mut peers = self.peers.lock().await;
             if !peers.contains_key(&handshake.device_id) {
                 peers.insert(handshake.device_id, Details::new(peer_addr, out_tx));
+                println!("[ADDED] {:?}", handshake.device_id);
             }
         }
 
         let writer = async move {
             while let Some(frame) = out_rx.recv().await {
                 if frame.write(&mut wh).await.is_err() {
-                    println!("{:?} exiting!", handshake.device_id);
                     break;
                 }
             }
@@ -187,7 +189,7 @@ impl Transport {
         let peers = self.peers.clone();
         while let Some(frame) = local_rx.recv().await {
             peers.lock().await.retain(|id, details| {
-                println!("sending: {:?}", id);
+                println!("[SENDING] {:?}", id);
                 details.out_tx.send(frame.clone()).is_ok()
             });
         }
