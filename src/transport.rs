@@ -162,6 +162,7 @@ impl Transport {
                 if frame.write(&mut wh).await.is_err() {
                     break;
                 }
+                println!("[SENT] {:?}", handshake.device_id);
             }
         };
 
@@ -169,6 +170,7 @@ impl Transport {
         let reader = async move {
             while let Ok(frame) = Frame::read(&mut rh).await {
                 cm.resolve(frame).await;
+                println!("[RECEIVED] {:?}", handshake.device_id);
             }
         };
 
@@ -189,10 +191,10 @@ impl Transport {
     pub async fn broadcast_local(&self, mut local_rx: mpsc::UnboundedReceiver<Frame>) {
         let peers = self.peers.clone();
         while let Some(frame) = local_rx.recv().await {
-            peers.lock().await.retain(|id, details| {
-                println!("[SENDING] {:?}", id);
-                details.out_tx.send(frame.clone()).is_ok()
-            });
+            peers
+                .lock()
+                .await
+                .retain(|_id, details| details.out_tx.send(frame.clone()).is_ok());
         }
     }
 }
