@@ -133,10 +133,10 @@ impl Transport {
                 let this = this.clone();
                 tokio::spawn(async move {
                     let _ = this.handle_connection(stream).await;
-                    println!("[LISTENING] {:?} port:{}", this.device_id, this.tcp_port);
                 });
             }
         });
+        println!("[LISTENING] {:?} port:{}", self.device_id, self.tcp_port);
     }
     pub async fn handle_connection(&self, stream: TcpStream) -> Result<(), AppErr> {
         let peer_addr = stream.peer_addr().map_err(|_| AppErr::AddressErr)?;
