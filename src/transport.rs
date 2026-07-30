@@ -151,8 +151,8 @@ impl Transport {
 
         {
             let mut peers = self.peers.lock().await;
-            if !peers.contains_key(&handshake.device_id) {
-                peers.insert(handshake.device_id, Details::new(peer_addr, out_tx));
+            if let std::collections::hash_map::Entry::Vacant(e) = peers.entry(handshake.device_id) {
+                e.insert(Details::new(peer_addr, out_tx));
                 println!("[ADDED] {:?}", handshake.device_id);
             }
         }
