@@ -306,7 +306,7 @@ dependencies = [
 
 [[package]]
 name = "clipsynk-core"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "local-ip-address",
  "serde",
@@ -320,7 +320,7 @@ dependencies = [
 
 [[package]]
 name = "clipsynk-desktop"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "arboard",
  "clipboard-master",
@@ -334,7 +334,7 @@ dependencies = [
 
 [[package]]
 name = "clipsynk-ffi"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "clipsynk-core",
  "tokio",
