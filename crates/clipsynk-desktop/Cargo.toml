@@ -11,7 +11,7 @@ name = "clipsynk"
 path = "src/main.rs"
 
 [dependencies]
-clipsynk-core = { path = "../clipsynk-core" }
+clipsynk-core = { path = "../clipsynk-core", version = "0.1.2" }
 tokio.workspace = true
 uuid.workspace = true
 
