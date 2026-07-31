@@ -15,7 +15,6 @@ use tokio::{
 use uuid::Uuid;
 
 use crate::{
-    clipboard::ClipboardManager,
     errors::AppErr,
     frame::{Frame, HandShake},
 };
@@ -39,7 +38,7 @@ pub struct Transport {
     pub device_id: Uuid,
     pub tcp_port: u16,
     pub peers: Arc<Mutex<Map>>,
-    pub cm: ClipboardManager,
+    pub remote_tx: mpsc::UnboundedSender<Frame>,
 }
 
 impl Transport {
@@ -47,7 +46,7 @@ impl Transport {
         device_id: Uuid,
         broadcast_port: u16,
         local_rx: mpsc::UnboundedReceiver<Frame>,
-        cm: ClipboardManager,
+        remote_tx: mpsc::UnboundedSender<Frame>,
     ) -> Result<(), Box<dyn Error>> {
         let tcp_listener = TcpListener::bind("0.0.0.0:0").await.unwrap();
         let tcp_port = tcp_listener.local_addr().unwrap().port();
@@ -55,7 +54,7 @@ impl Transport {
             device_id,
             tcp_port,
             peers: Arc::new(Mutex::new(Map::new())),
-            cm,
+            remote_tx,
         };
 
         transport.discover(broadcast_port).await;
@@ -166,10 +165,10 @@ impl Transport {
             }
         };
 
-        let cm = self.cm.clone();
+        let remote_tx = self.remote_tx.clone();
         let reader = async move {
             while let Ok(frame) = Frame::read(&mut rh).await {
-                cm.resolve(frame).await;
+                let _ = remote_tx.send(frame);
                 println!("[RECEIVED] {:?}", handshake.device_id);
             }
         };
@@ -190,11 +189,13 @@ impl Transport {
 
     pub async fn broadcast_local(&self, mut local_rx: mpsc::UnboundedReceiver<Frame>) {
         let peers = self.peers.clone();
-        while let Some(frame) = local_rx.recv().await {
-            peers
-                .lock()
-                .await
-                .retain(|_id, details| details.out_tx.send(frame.clone()).is_ok());
-        }
+        tokio::spawn(async move {
+            while let Some(frame) = local_rx.recv().await {
+                peers
+                    .lock()
+                    .await
+                    .retain(|_id, details| details.out_tx.send(frame.clone()).is_ok());
+            }
+        });
     }
 }

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use tokio::sync::{Mutex, mpsc};
 
-use crate::frame::Frame;
+use clipsynk_core::Frame;
 
 #[derive(Debug, Default, Clone)]
 pub struct ClipboardState {
@@ -10,27 +10,35 @@ pub struct ClipboardState {
     pub timestamp: u128,
 }
 
-#[derive(Debug, Clone)]
-pub struct ClipboardManager {
+#[derive(Debug, Clone, Default)]
+pub struct DesktopClipboard {
     pub clipboard: Arc<Mutex<ClipboardState>>,
 }
 
-impl ClipboardManager {
-    pub async fn new() -> (Self, mpsc::UnboundedReceiver<Frame>) {
-        let cm = Self {
+impl DesktopClipboard {
+    pub fn new() -> Self {
+        Self {
             clipboard: Arc::new(Mutex::new(ClipboardState::default())),
-        };
-        let local_rx = cm.watch().await;
-
-        (cm, local_rx)
-    }
-    pub async fn resolve(&self, frame: Frame) {
-        let mut cb = self.clipboard.lock().await;
-        if frame.hash != cb.hash && frame.timestamp > cb.timestamp {
-            cb.hash = frame.hash;
-            cb.timestamp = frame.timestamp;
-            self.set_content(&frame.bytes).await;
         }
+    }
+
+    pub async fn start(&self) -> (mpsc::UnboundedReceiver<Frame>, mpsc::UnboundedSender<Frame>) {
+        let local_rx = self.watch().await;
+        let (remote_tx, mut remote_rx) = mpsc::unbounded_channel::<Frame>();
+
+        let this = self.clone();
+        tokio::spawn(async move {
+            while let Some(frame) = remote_rx.recv().await {
+                let mut cb = this.clipboard.lock().await;
+                if frame.hash != cb.hash && frame.timestamp > cb.timestamp {
+                    cb.hash = frame.hash;
+                    cb.timestamp = frame.timestamp;
+                    this.set_content(&frame.bytes).await;
+                }
+            }
+        });
+
+        (local_rx, remote_tx)
     }
 
     #[cfg(target_os = "linux")]
