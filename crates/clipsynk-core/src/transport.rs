@@ -189,13 +189,11 @@ impl Transport {
 
     pub async fn broadcast_local(&self, mut local_rx: mpsc::UnboundedReceiver<Frame>) {
         let peers = self.peers.clone();
-        tokio::spawn(async move {
-            while let Some(frame) = local_rx.recv().await {
-                peers
-                    .lock()
-                    .await
-                    .retain(|_id, details| details.out_tx.send(frame.clone()).is_ok());
-            }
-        });
+        while let Some(frame) = local_rx.recv().await {
+            peers
+                .lock()
+                .await
+                .retain(|_id, details| details.out_tx.send(frame.clone()).is_ok());
+        }
     }
 }

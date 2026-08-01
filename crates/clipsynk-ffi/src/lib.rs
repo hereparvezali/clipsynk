@@ -13,6 +13,7 @@ pub trait MobileClipboardReceiver: Send + Sync {
 #[derive(uniffi::Object)]
 pub struct ClipSynkEngine {
     local_tx: mpsc::UnboundedSender<Frame>,
+    _rt: std::sync::Mutex<Option<tokio::runtime::Runtime>>,
 }
 
 #[uniffi::export]
@@ -20,26 +21,37 @@ impl ClipSynkEngine {
     /// Start the sync engine. Provides a callback for when remote frames arrive.
     #[uniffi::constructor]
     pub fn start(receiver: Box<dyn MobileClipboardReceiver>) -> Self {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+
         let (local_tx, local_rx) = mpsc::unbounded_channel::<Frame>();
         let (remote_tx, mut remote_rx) = mpsc::unbounded_channel::<Frame>();
 
         let device_id = Uuid::new_v4();
 
         // Start networking in background
-        tokio::spawn(async move {
+        rt.spawn(async move {
             let _ =
                 Transport::new_start(device_id, DEFAULT_BROADCAST_PORT, local_rx, remote_tx).await;
         });
 
         // Forward remote_rx to FFI callback
-        tokio::spawn(async move {
+        rt.spawn(async move {
             while let Some(frame) = remote_rx.recv().await {
                 // Conflict resolution logic is pushed up to Kotlin/Swift layer.
                 receiver.on_remote_frame(frame.hash, frame.timestamp as u64, frame.bytes);
             }
         });
 
-        Self { local_tx }
+        Self {
+            local_tx,
+            _rt: std::sync::Mutex::new(Some(rt)),
+        }
+    }
+
+    /// Stops the background networking tasks explicitly.
+    pub fn stop(&self) {
+        let mut rt_guard = self._rt.lock().unwrap();
+        *rt_guard = None; // Drops the tokio runtime, cancelling all tasks instantly
     }
 
     /// Called by Kotlin/Swift when local clipboard changes.
