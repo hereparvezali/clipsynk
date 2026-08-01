@@ -13,7 +13,6 @@ Thumbs.db
 *.swo
 
 # Android NDK generated libs (since we use cargo ndk)
-/android/app/src/main/jniLibs/
 android/build/reports/problems/
 android/app/build/
 android/.gradle/
