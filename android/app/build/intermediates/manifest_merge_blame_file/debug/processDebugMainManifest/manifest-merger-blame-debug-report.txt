@@ -54,135 +54,134 @@
 30        android:extractNativeLibs="true"
 31        android:label="ClipSynk"
 31-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:15:9-33
-32        android:testOnly="true"
-33        android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
-33-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:16:9-65
-34
-35        <!-- Main UI to start/stop the service -->
-36        <activity
-36-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:19:9-26:20
-37            android:name="com.clipsynk.MainActivity"
-37-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:20:13-41
-38            android:exported="true" >
-38-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:21:13-36
-39            <intent-filter>
-39-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:22:13-25:29
-40                <action android:name="android.intent.action.MAIN" />
-40-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:23:17-69
-40-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:23:25-66
-41
-42                <category android:name="android.intent.category.LAUNCHER" />
-42-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:24:17-77
-42-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:24:27-74
-43            </intent-filter>
-44        </activity>
-45
-46        <!-- Transparent Activity for handling Quick Tile clicks -->
-47        <activity
-47-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:29:9-32:40
-48            android:name="com.clipsynk.SyncActivity"
-48-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:30:13-41
-49            android:exported="false"
-49-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:32:13-37
-50            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-50-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:31:13-72
-51
-52        <!-- Foreground Service that runs Rust networking -->
-53        <service
-53-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:35:9-38:40
-54            android:name="com.clipsynk.ClipSynkService"
-54-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:36:13-44
-55            android:exported="false"
-55-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:38:13-37
-56            android:foregroundServiceType="connectedDevice" />
-56-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:37:13-60
-57
-58        <!-- Quick Settings Tile -->
-59        <service
-59-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:41:9-50:19
-60            android:name="com.clipsynk.ClipSynkTileService"
-60-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:42:13-48
-61            android:exported="true"
-61-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:43:13-36
-62            android:icon="@android:drawable/ic_menu_share"
-62-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:45:13-59
-63            android:label="Sync Clipboard"
-63-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:44:13-43
-64            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE" >
-64-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:46:13-77
-65            <intent-filter>
-65-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:47:13-49:29
-66                <action android:name="android.service.quicksettings.action.QS_TILE" />
-66-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:48:17-87
-66-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:48:25-84
-67            </intent-filter>
-68        </service>
-69
-70        <provider
-70-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:24:9-32:20
-71            android:name="androidx.startup.InitializationProvider"
-71-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:25:13-67
-72            android:authorities="com.clipsynk.androidx-startup"
-72-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:26:13-68
-73            android:exported="false" >
-73-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:27:13-37
-74            <meta-data
-74-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:29:13-31:52
-75                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-75-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:30:17-75
-76                android:value="androidx.startup" />
-76-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:31:17-49
-77            <meta-data
-77-->[androidx.lifecycle:lifecycle-process:2.6.1] /home/parvez/.gradle/caches/9.3.0/transforms/5652a09c5c434ac687d3b4c1aaa72a38/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:29:13-31:52
-78                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-78-->[androidx.lifecycle:lifecycle-process:2.6.1] /home/parvez/.gradle/caches/9.3.0/transforms/5652a09c5c434ac687d3b4c1aaa72a38/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:30:17-78
-79                android:value="androidx.startup" />
-79-->[androidx.lifecycle:lifecycle-process:2.6.1] /home/parvez/.gradle/caches/9.3.0/transforms/5652a09c5c434ac687d3b4c1aaa72a38/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:31:17-49
-80            <meta-data
-80-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:29:13-31:52
-81                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-81-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:30:17-85
-82                android:value="androidx.startup" />
-82-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:31:17-49
-83        </provider>
-84
-85        <receiver
-85-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:34:9-52:20
-86            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-86-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:35:13-76
-87            android:directBootAware="false"
-87-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:36:13-44
-88            android:enabled="true"
-88-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:37:13-35
-89            android:exported="true"
-89-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:38:13-36
-90            android:permission="android.permission.DUMP" >
-90-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:39:13-57
-91            <intent-filter>
-91-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:40:13-42:29
-92                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-92-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:41:17-91
-92-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:41:25-88
-93            </intent-filter>
-94            <intent-filter>
-94-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:43:13-45:29
-95                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-95-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:44:17-85
-95-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:44:25-82
-96            </intent-filter>
-97            <intent-filter>
-97-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:46:13-48:29
-98                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-98-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:47:17-88
-98-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:47:25-85
-99            </intent-filter>
-100            <intent-filter>
-100-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:49:13-51:29
-101                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-101-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:50:17-95
-101-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:50:25-92
-102            </intent-filter>
-103        </receiver>
-104    </application>
-105
-106</manifest>
+32        android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
+32-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:16:9-65
+33
+34        <!-- Main UI to start/stop the service -->
+35        <activity
+35-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:19:9-26:20
+36            android:name="com.clipsynk.MainActivity"
+36-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:20:13-41
+37            android:exported="true" >
+37-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:21:13-36
+38            <intent-filter>
+38-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:22:13-25:29
+39                <action android:name="android.intent.action.MAIN" />
+39-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:23:17-69
+39-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:23:25-66
+40
+41                <category android:name="android.intent.category.LAUNCHER" />
+41-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:24:17-77
+41-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:24:27-74
+42            </intent-filter>
+43        </activity>
+44
+45        <!-- Transparent Activity for handling Quick Tile clicks -->
+46        <activity
+46-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:29:9-32:40
+47            android:name="com.clipsynk.SyncActivity"
+47-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:30:13-41
+48            android:exported="false"
+48-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:32:13-37
+49            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+49-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:31:13-72
+50
+51        <!-- Foreground Service that runs Rust networking -->
+52        <service
+52-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:35:9-38:40
+53            android:name="com.clipsynk.ClipSynkService"
+53-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:36:13-44
+54            android:exported="false"
+54-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:38:13-37
+55            android:foregroundServiceType="connectedDevice" />
+55-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:37:13-60
+56
+57        <!-- Quick Settings Tile -->
+58        <service
+58-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:41:9-50:19
+59            android:name="com.clipsynk.ClipSynkTileService"
+59-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:42:13-48
+60            android:exported="true"
+60-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:43:13-36
+61            android:icon="@android:drawable/ic_menu_share"
+61-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:45:13-59
+62            android:label="Sync Clipboard"
+62-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:44:13-43
+63            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE" >
+63-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:46:13-77
+64            <intent-filter>
+64-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:47:13-49:29
+65                <action android:name="android.service.quicksettings.action.QS_TILE" />
+65-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:48:17-87
+65-->/home/parvez/reps/clipsynk/android/app/src/main/AndroidManifest.xml:48:25-84
+66            </intent-filter>
+67        </service>
+68
+69        <provider
+69-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:24:9-32:20
+70            android:name="androidx.startup.InitializationProvider"
+70-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:25:13-67
+71            android:authorities="com.clipsynk.androidx-startup"
+71-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:26:13-68
+72            android:exported="false" >
+72-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:27:13-37
+73            <meta-data
+73-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:29:13-31:52
+74                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+74-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:30:17-75
+75                android:value="androidx.startup" />
+75-->[androidx.emoji2:emoji2:1.2.0] /home/parvez/.gradle/caches/9.3.0/transforms/fe59a4b1e84f9348e8b167138a85ed17/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:31:17-49
+76            <meta-data
+76-->[androidx.lifecycle:lifecycle-process:2.6.1] /home/parvez/.gradle/caches/9.3.0/transforms/5652a09c5c434ac687d3b4c1aaa72a38/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:29:13-31:52
+77                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+77-->[androidx.lifecycle:lifecycle-process:2.6.1] /home/parvez/.gradle/caches/9.3.0/transforms/5652a09c5c434ac687d3b4c1aaa72a38/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:30:17-78
+78                android:value="androidx.startup" />
+78-->[androidx.lifecycle:lifecycle-process:2.6.1] /home/parvez/.gradle/caches/9.3.0/transforms/5652a09c5c434ac687d3b4c1aaa72a38/transformed/jetified-lifecycle-process-2.6.1/AndroidManifest.xml:31:17-49
+79            <meta-data
+79-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:29:13-31:52
+80                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+80-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:30:17-85
+81                android:value="androidx.startup" />
+81-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:31:17-49
+82        </provider>
+83
+84        <receiver
+84-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:34:9-52:20
+85            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+85-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:35:13-76
+86            android:directBootAware="false"
+86-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:36:13-44
+87            android:enabled="true"
+87-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:37:13-35
+88            android:exported="true"
+88-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:38:13-36
+89            android:permission="android.permission.DUMP" >
+89-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:39:13-57
+90            <intent-filter>
+90-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:40:13-42:29
+91                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+91-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:41:17-91
+91-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:41:25-88
+92            </intent-filter>
+93            <intent-filter>
+93-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:43:13-45:29
+94                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+94-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:44:17-85
+94-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:44:25-82
+95            </intent-filter>
+96            <intent-filter>
+96-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:46:13-48:29
+97                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+97-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:47:17-88
+97-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:47:25-85
+98            </intent-filter>
+99            <intent-filter>
+99-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:49:13-51:29
+100                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+100-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:50:17-95
+100-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/parvez/.gradle/caches/9.3.0/transforms/3801e8987f5872bd9da943e4654dcde5/transformed/jetified-profileinstaller-1.3.0/AndroidManifest.xml:50:25-92
+101            </intent-filter>
+102        </receiver>
+103    </application>
+104
+105</manifest>

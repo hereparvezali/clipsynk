@@ -29,7 +29,6 @@
         android:debuggable="true"
         android:extractNativeLibs="true"
         android:label="ClipSynk"
-        android:testOnly="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar" >
 
         <!-- Main UI to start/stop the service -->

@@ -1,1 +1,16 @@
-/target
+# Rust
+/target/
+**/*.rs.bk
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Android NDK generated libs (since we use cargo ndk)
+/android/app/src/main/jniLibs/
