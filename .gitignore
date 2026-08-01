@@ -16,3 +16,5 @@ Thumbs.db
 /android/app/src/main/jniLibs/
 android/build/reports/problems/
 android/app/build/
+android/.gradle/
+android/.idea/
