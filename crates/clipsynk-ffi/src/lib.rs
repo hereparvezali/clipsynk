@@ -1,4 +1,4 @@
-use clipsynk_core::{DEFAULT_BROADCAST_PORT, Frame, Transport};
+use clipsynk_core::{DEFAULT_BROADCAST_PORT, DEFAULT_CHANNEL_CAPACITY, Frame, Transport};
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
@@ -12,7 +12,7 @@ pub trait MobileClipboardReceiver: Send + Sync {
 
 #[derive(uniffi::Object)]
 pub struct ClipSynkEngine {
-    local_tx: mpsc::UnboundedSender<Frame>,
+    local_tx: mpsc::Sender<Frame>,
     _rt: std::sync::Mutex<Option<tokio::runtime::Runtime>>,
 }
 
@@ -23,8 +23,8 @@ impl ClipSynkEngine {
     pub fn start(receiver: Box<dyn MobileClipboardReceiver>) -> Self {
         let rt = tokio::runtime::Runtime::new().unwrap();
 
-        let (local_tx, local_rx) = mpsc::unbounded_channel::<Frame>();
-        let (remote_tx, mut remote_rx) = mpsc::unbounded_channel::<Frame>();
+        let (local_tx, local_rx) = mpsc::channel::<Frame>(DEFAULT_CHANNEL_CAPACITY);
+        let (remote_tx, mut remote_rx) = mpsc::channel::<Frame>(DEFAULT_CHANNEL_CAPACITY);
 
         let device_id = Uuid::new_v4();
 
@@ -57,6 +57,6 @@ impl ClipSynkEngine {
     /// Called by Kotlin/Swift when local clipboard changes.
     pub fn send_local_frame(&self, bytes: Vec<u8>) {
         let frame = Frame::new(&bytes);
-        let _ = self.local_tx.send(frame);
+        let _ = self.local_tx.blocking_send(frame);
     }
 }

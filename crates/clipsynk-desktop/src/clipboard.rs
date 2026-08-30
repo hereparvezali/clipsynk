@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use tokio::sync::{Mutex, mpsc};
 
-use clipsynk_core::Frame;
+use clipsynk_core::{DEFAULT_CHANNEL_CAPACITY, Frame};
 
 #[derive(Debug, Default, Clone)]
 pub struct ClipboardState {
@@ -22,9 +22,9 @@ impl DesktopClipboard {
         }
     }
 
-    pub async fn start(&self) -> (mpsc::UnboundedReceiver<Frame>, mpsc::UnboundedSender<Frame>) {
+    pub async fn start(&self) -> (mpsc::Receiver<Frame>, mpsc::Sender<Frame>) {
         let local_rx = self.watch().await;
-        let (remote_tx, mut remote_rx) = mpsc::unbounded_channel::<Frame>();
+        let (remote_tx, mut remote_rx) = mpsc::channel::<Frame>(DEFAULT_CHANNEL_CAPACITY);
 
         let this = self.clone();
         tokio::spawn(async move {
@@ -137,7 +137,7 @@ impl DesktopClipboard {
     }
 
     #[cfg(target_os = "linux")]
-    async fn watch(&self) -> tokio::sync::mpsc::UnboundedReceiver<Frame> {
+    async fn watch(&self) -> mpsc::Receiver<Frame> {
         if std::env::var("WAYLAND_DISPLAY").is_ok() {
             self.watch_wayland().await
         } else {
@@ -146,8 +146,8 @@ impl DesktopClipboard {
     }
 
     #[cfg(target_os = "linux")]
-    async fn watch_wayland(&self) -> mpsc::UnboundedReceiver<Frame> {
-        let (local_tx, local_rx) = mpsc::unbounded_channel::<Frame>();
+    async fn watch_wayland(&self) -> mpsc::Receiver<Frame> {
+        let (local_tx, local_rx) = mpsc::channel::<Frame>(DEFAULT_CHANNEL_CAPACITY);
         let cb = self.clipboard.clone();
 
         tokio::spawn(async move {
@@ -163,21 +163,21 @@ impl DesktopClipboard {
                 }
                 cb.hash = frame.hash;
                 cb.timestamp = frame.timestamp;
-                local_tx.send(frame).unwrap();
+                let _ = local_tx.send(frame).await;
             }
         });
         local_rx
     }
 
     #[cfg(target_os = "linux")]
-    async fn watch_x11(&self) -> mpsc::UnboundedReceiver<Frame> {
+    async fn watch_x11(&self) -> mpsc::Receiver<Frame> {
         use clipboard_master::{CallbackResult, ClipboardHandler, Master};
 
-        let (local_tx, local_rx) = mpsc::unbounded_channel::<Frame>();
+        let (local_tx, local_rx) = mpsc::channel::<Frame>(DEFAULT_CHANNEL_CAPACITY);
         let cb = self.clipboard.clone();
 
         struct Handler {
-            local_tx: mpsc::UnboundedSender<Frame>,
+            local_tx: mpsc::Sender<Frame>,
             cb: std::sync::Arc<tokio::sync::Mutex<ClipboardState>>,
         }
 
@@ -191,7 +191,7 @@ impl DesktopClipboard {
                     if cb.hash != frame.hash {
                         cb.hash = frame.hash;
                         cb.timestamp = frame.timestamp;
-                        let _ = self.local_tx.send(frame);
+                        let _ = self.local_tx.blocking_send(frame);
                     }
                 }
                 CallbackResult::Next
@@ -206,15 +206,15 @@ impl DesktopClipboard {
         local_rx
     }
     #[cfg(target_os = "windows")]
-    async fn watch(&self) -> mpsc::UnboundedReceiver<Frame> {
+    async fn watch(&self) -> mpsc::Receiver<Frame> {
         use clipboard_master::{CallbackResult, ClipboardHandler, Master};
         use clipboard_win::get_clipboard_string;
 
-        let (local_tx, local_rx) = mpsc::unbounded_channel::<Frame>();
+        let (local_tx, local_rx) = mpsc::channel::<Frame>(DEFAULT_CHANNEL_CAPACITY);
         let cb = self.clipboard.clone();
 
         struct Handler {
-            local_tx: mpsc::UnboundedSender<Frame>,
+            local_tx: mpsc::Sender<Frame>,
             cb: std::sync::Arc<tokio::sync::Mutex<ClipboardState>>,
         }
 
@@ -229,7 +229,7 @@ impl DesktopClipboard {
                         cb.hash = frame.hash;
                         cb.timestamp = frame.timestamp;
 
-                        let _ = self.local_tx.send(frame);
+                        let _ = self.local_tx.blocking_send(frame);
                     }
                 }
 
@@ -245,14 +245,14 @@ impl DesktopClipboard {
         local_rx
     }
     #[cfg(target_os = "macos")]
-    async fn watch(&self) -> mpsc::UnboundedReceiver<Frame> {
+    async fn watch(&self) -> mpsc::Receiver<Frame> {
         use clipboard_master::{CallbackResult, ClipboardHandler, Master};
 
-        let (local_tx, local_rx) = mpsc::unbounded_channel::<Frame>();
+        let (local_tx, local_rx) = mpsc::channel::<Frame>(DEFAULT_CHANNEL_CAPACITY);
         let cb = self.clipboard.clone();
 
         struct Handler {
-            local_tx: mpsc::UnboundedSender<Frame>,
+            local_tx: mpsc::Sender<Frame>,
             cb: std::sync::Arc<tokio::sync::Mutex<ClipboardState>>,
         }
 
@@ -269,7 +269,7 @@ impl DesktopClipboard {
                         cb.hash = frame.hash;
                         cb.timestamp = frame.timestamp;
 
-                        let _ = self.local_tx.send(frame);
+                        let _ = self.local_tx.blocking_send(frame);
                     }
                 }
 

@@ -15,6 +15,7 @@ use tokio::{
 use uuid::Uuid;
 
 use crate::{
+    DEFAULT_CHANNEL_CAPACITY,
     errors::AppErr,
     frame::{Frame, HandShake},
 };
@@ -23,10 +24,10 @@ use crate::{
 pub struct Details {
     #[allow(unused)]
     address: SocketAddr,
-    out_tx: mpsc::UnboundedSender<Frame>,
+    out_tx: mpsc::Sender<Frame>,
 }
 impl Details {
-    pub fn new(address: SocketAddr, out_tx: mpsc::UnboundedSender<Frame>) -> Self {
+    pub fn new(address: SocketAddr, out_tx: mpsc::Sender<Frame>) -> Self {
         Self { address, out_tx }
     }
 }
@@ -38,15 +39,15 @@ pub struct Transport {
     pub device_id: Uuid,
     pub tcp_port: u16,
     pub peers: Arc<Mutex<Map>>,
-    pub remote_tx: mpsc::UnboundedSender<Frame>,
+    pub remote_tx: mpsc::Sender<Frame>,
 }
 
 impl Transport {
     pub async fn new_start(
         device_id: Uuid,
         broadcast_port: u16,
-        local_rx: mpsc::UnboundedReceiver<Frame>,
-        remote_tx: mpsc::UnboundedSender<Frame>,
+        local_rx: mpsc::Receiver<Frame>,
+        remote_tx: mpsc::Sender<Frame>,
     ) -> Result<(), Box<dyn Error>> {
         let tcp_listener = TcpListener::bind("0.0.0.0:0").await.unwrap();
         let tcp_port = tcp_listener.local_addr().unwrap().port();
@@ -144,7 +145,7 @@ impl Transport {
         let payload = HandShake::new(self.device_id, self.tcp_port);
         payload.write(&mut wh).await?;
 
-        let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Frame>();
+        let (out_tx, mut out_rx) = mpsc::channel::<Frame>(DEFAULT_CHANNEL_CAPACITY);
 
         let handshake = HandShake::read(&mut rh).await?;
 
@@ -168,7 +169,9 @@ impl Transport {
         let remote_tx = self.remote_tx.clone();
         let reader = async move {
             while let Ok(frame) = Frame::read(&mut rh).await {
-                let _ = remote_tx.send(frame);
+                if remote_tx.send(frame).await.is_err() {
+                    break;
+                }
                 println!("[RECEIVED] {:?}", handshake.device_id);
             }
         };
@@ -187,13 +190,16 @@ impl Transport {
         Ok(())
     }
 
-    pub async fn broadcast_local(&self, mut local_rx: mpsc::UnboundedReceiver<Frame>) {
+    pub async fn broadcast_local(&self, mut local_rx: mpsc::Receiver<Frame>) {
         let peers = self.peers.clone();
         while let Some(frame) = local_rx.recv().await {
-            peers
-                .lock()
-                .await
-                .retain(|_id, details| details.out_tx.send(frame.clone()).is_ok());
+            peers.lock().await.retain(|_id, details| {
+                match details.out_tx.try_send(frame.clone()) {
+                    Ok(_) => true,
+                    Err(mpsc::error::TrySendError::Full(_)) => true,
+                    Err(mpsc::error::TrySendError::Closed(_)) => false,
+                }
+            });
         }
     }
 }
