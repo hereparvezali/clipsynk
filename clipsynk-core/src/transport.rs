@@ -2,15 +2,15 @@ use std::{collections::HashMap, error::Error, net::SocketAddr, sync::Arc};
 
 use tokio::{
     net::{TcpListener, TcpStream},
-    sync::{mpsc, Mutex},
+    sync::{Mutex, mpsc},
 };
 use uuid::Uuid;
 
 use crate::{
+    DEFAULT_CHANNEL_CAPACITY,
     discover::Discovery,
     errors::AppErr,
     frame::{Frame, HandShake},
-    DEFAULT_CHANNEL_CAPACITY,
 };
 
 #[derive(Debug)]
@@ -55,11 +55,9 @@ impl Transport {
 
         Discovery::start(device_id, tcp_port, broadcast_port, transport.clone()).await;
         transport.clone().listen(tcp_listener).await;
-        
+
         let t_clone = transport.clone();
-        tokio::spawn(async move {
-            t_clone.broadcast_local(local_rx).await;
-        });
+        t_clone.broadcast_local(local_rx).await;
 
         Ok(())
     }
@@ -141,14 +139,16 @@ impl Transport {
 
     pub async fn broadcast_local(&self, mut local_rx: mpsc::Receiver<Frame>) {
         let peers = self.peers.clone();
-        while let Some(frame) = local_rx.recv().await {
-            peers.lock().await.retain(|_id, details| {
-                match details.out_tx.try_send(frame.clone()) {
-                    Ok(_) => true,
-                    Err(mpsc::error::TrySendError::Full(_)) => true,
-                    Err(mpsc::error::TrySendError::Closed(_)) => false,
-                }
-            });
-        }
+        tokio::spawn(async move {
+            while let Some(frame) = local_rx.recv().await {
+                peers.lock().await.retain(|_id, details| {
+                    match details.out_tx.try_send(frame.clone()) {
+                        Ok(_) => true,
+                        Err(mpsc::error::TrySendError::Full(_)) => true,
+                        Err(mpsc::error::TrySendError::Closed(_)) => false,
+                    }
+                });
+            }
+        });
     }
 }

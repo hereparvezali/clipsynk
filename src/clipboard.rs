@@ -150,20 +150,21 @@ impl DesktopClipboard {
         let (local_tx, local_rx) = mpsc::channel::<Frame>(DEFAULT_CHANNEL_CAPACITY);
         let cb = self.clipboard.clone();
 
-        tokio::spawn(async move {
+        tokio::task::spawn_blocking(move || {
             let mut clipboard_stream = wayland_clipboard_listener::WlClipboardPasteStream::init(
                 wayland_clipboard_listener::WlListenType::ListenOnCopy,
             )
             .unwrap();
-            while let Some(Ok(msg)) = clipboard_stream.paste_stream().next() {
+            let stream = clipboard_stream.paste_stream();
+            while let Some(Ok(msg)) = stream.next() {
                 let frame = Frame::new(&msg.context.context);
-                let mut cb = cb.lock().await;
+                let mut cb = cb.blocking_lock();
                 if cb.hash == frame.hash {
                     continue;
                 }
                 cb.hash = frame.hash;
                 cb.timestamp = frame.timestamp;
-                let _ = local_tx.send(frame).await;
+                let _ = local_tx.blocking_send(frame);
             }
         });
         local_rx
