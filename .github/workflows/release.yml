@@ -121,15 +121,15 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
-      - name: Build Android APK
+      - name: Build Android Release APK
         run: |
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease
 
       - name: Prepare APK Asset
         run: |
           mkdir -p target/android
-          cp android/app/build/outputs/apk/debug/app-debug.apk target/android/clipsynk-android.apk
+          cp android/app/build/outputs/apk/release/app-release.apk target/android/clipsynk-android.apk
 
       - name: Upload Android APK
         uses: softprops/action-gh-release@v2
