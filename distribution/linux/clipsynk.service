@@ -1,13 +1,15 @@
 [Unit]
 Description=ClipSynk Background Clipboard Synchronizer
 Documentation=https://github.com/hereparvezali/clipsynk
-After=network.target
+PartOf=graphical-session.target
+After=graphical-session.target network.target
 
 [Service]
 Type=simple
 ExecStart=/usr/bin/clipsynk
 Restart=on-failure
-RestartSec=3
+RestartSec=2
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
 
 [Install]
-WantedBy=default.target
+WantedBy=graphical-session.target default.target

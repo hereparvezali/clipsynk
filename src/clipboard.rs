@@ -151,19 +151,27 @@ impl DesktopClipboard {
         let cb = self.clipboard.clone();
 
         tokio::spawn(async move {
-            let mut clipboard_stream = wayland_clipboard_listener::WlClipboardPasteStream::init(
-                wayland_clipboard_listener::WlListenType::ListenOnCopy,
-            )
-            .unwrap();
-            while let Some(Ok(msg)) = clipboard_stream.paste_stream().next() {
-                let frame = Frame::new(&msg.context.context);
-                let mut cb = cb.lock().await;
-                if cb.hash == frame.hash {
-                    continue;
+            loop {
+                match wayland_clipboard_listener::WlClipboardPasteStream::init(
+                    wayland_clipboard_listener::WlListenType::ListenOnCopy,
+                ) {
+                    Ok(mut clipboard_stream) => {
+                        while let Some(Ok(msg)) = clipboard_stream.paste_stream().next() {
+                            let frame = Frame::new(&msg.context.context);
+                            let mut cb = cb.lock().await;
+                            if cb.hash == frame.hash {
+                                continue;
+                            }
+                            cb.hash = frame.hash;
+                            cb.timestamp = frame.timestamp;
+                            let _ = local_tx.send(frame).await;
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("[WAYLAND] Failed to connect to display server ({:?}), retrying in 2s...", e);
+                        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+                    }
                 }
-                cb.hash = frame.hash;
-                cb.timestamp = frame.timestamp;
-                let _ = local_tx.send(frame).await;
             }
         });
         local_rx
@@ -199,8 +207,20 @@ impl DesktopClipboard {
         }
 
         tokio::task::spawn_blocking(move || {
-            let mut master = Master::new(Handler { local_tx, cb }).unwrap();
-            let _ = master.run();
+            loop {
+                match Master::new(Handler {
+                    local_tx: local_tx.clone(),
+                    cb: cb.clone(),
+                }) {
+                    Ok(mut master) => {
+                        let _ = master.run();
+                    }
+                    Err(e) => {
+                        eprintln!("[X11] Failed to connect to X11 display ({:?}), retrying in 2s...", e);
+                        std::thread::sleep(std::time::Duration::from_secs(2));
+                    }
+                }
+            }
         });
 
         local_rx
