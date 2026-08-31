@@ -1,0 +1,19 @@
+# Maintainer: Parvez Ali <parvez@clipsynk.io>
+pkgname=clipsynk
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Seamless peer-to-peer LAN clipboard synchronizer daemon"
+arch=('x86_64')
+url="https://github.com/hereparvezali/clipsynk"
+license=('MIT' 'Apache-2.0')
+depends=('gcc-libs' 'wayland')
+makedepends=('cargo')
+
+build() {
+    cargo build --release --locked
+}
+
+package() {
+    install -Dm755 "target/release/clipsynk" "$pkgdir/usr/bin/clipsynk"
+    install -Dm644 "distribution/linux/clipsynk.service" "$pkgdir/usr/lib/systemd/user/clipsynk.service"
+}

@@ -31,3 +31,23 @@ clipboard-win = "5.4.1"
 [target.'cfg(target_os = "macos")'.dependencies]
 clipboard-master = "4.0.0"
 arboard = "3.6.1"
+
+[package.metadata.deb]
+maintainer = "Parvez Ali <parvez@clipsynk.io>"
+copyright = "2026, Parvez Ali"
+extended-description = "Seamless peer-to-peer LAN clipboard synchronizer daemon between Linux, Windows, and Android."
+section = "net"
+priority = "optional"
+assets = [
+    ["target/release/clipsynk", "usr/bin/clipsynk", "755"],
+    ["distribution/linux/clipsynk.service", "usr/lib/systemd/user/clipsynk.service", "644"]
+]
+
+[package.metadata.generate-rpm]
+summary = "Seamless peer-to-peer LAN clipboard synchronizer daemon"
+description = "ClipSynk synchronizes your clipboard in real-time across your local network between Linux, Windows, and Android."
+license = "MIT OR Apache-2.0"
+assets = [
+    { source = "target/release/clipsynk", dest = "/usr/bin/clipsynk", mode = "755" },
+    { source = "distribution/linux/clipsynk.service", dest = "/usr/lib/systemd/user/clipsynk.service", mode = "644" }
+]
