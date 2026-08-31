@@ -10,10 +10,12 @@ depends=('gcc-libs' 'wayland')
 makedepends=('cargo')
 
 build() {
+    cd "$startdir/../.."
     cargo build --release --locked
 }
 
 package() {
+    cd "$startdir/../.."
     install -Dm755 "target/release/clipsynk" "$pkgdir/usr/bin/clipsynk"
     install -Dm644 "distribution/linux/clipsynk.service" "$pkgdir/usr/lib/systemd/user/clipsynk.service"
 }
